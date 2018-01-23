@@ -7,7 +7,7 @@
 #include "pin.H"
 #include <iostream>
 #include <fstream>
-#include <vector>
+#include <map>
 
 /* ================================================================== */
 // Global variables 
@@ -39,7 +39,9 @@ UINT64 G = 32;
 UINT64 benchLength = 1000000000;
 UINT64 last = 0;
 
-vector <pair<UINT64,UINT64> > * instrVec;
+map < UINT64,bool >  instrMap;
+
+map < UINT64,bool >  dataMap;
 
 std::ostream * out = &cerr;
 
@@ -184,7 +186,27 @@ VOID stInstruction(UINT64 refSize)
 
 VOID insMemory(VOID *p, UINT64 insSize)
 {
-	(*instrVec).push_back(make_pair((reinterpret_cast<UINT64> (p))/G, (reinterpret_cast<UINT64> (p) + insSize)/G) );
+	// (*instrVec).push_back(make_pair((reinterpret_cast<UINT64> (p))/G, (reinterpret_cast<UINT64> (p) + insSize)/G) );
+	UINT64 start = reinterpret_cast<UINT64> (p)/G;
+	UINT64 end = (reinterpret_cast<UINT64> (p) + insSize)/G;
+
+	for(UINT64 i = start;i<=end;i++)
+	{
+		instrMap[i] = true;
+	}
+
+}
+
+VOID dataMemory(VOID *p, UINT64 dataSize)
+{
+	UINT64 start = reinterpret_cast<UINT64> (p)/G;
+	UINT64 end = (reinterpret_cast<UINT64> (p) + dataSize)/G;
+
+	for(UINT64 i = start;i<=end;i++)
+	{
+		dataMap[i] = true;
+	}
+
 }
 
 
@@ -243,24 +265,25 @@ VOID MyExitRoutine() {
     
     
 
-    sort((*instrVec).begin(), (*instrVec).end());
-    UINT64 total=0;
-    UINT64 start,end;
+    // sort((*instrVec).begin(), (*instrVec).end());
+    // UINT64 total=0;
+    // UINT64 start,end;
 
-    for (UINT64 i = 0; i < (*instrVec).size(); ++i)
-    {
-    	start = (*instrVec)[i].first;
-    	end = (*instrVec)[i].second;
-    	while (i+1<(*instrVec).size() && (*instrVec)[i+1].first <= end)
-    	{
-    		end = max((*instrVec)[i+1].second,end);
-    		i++;
-    	}
-    	total += end-start+1;
+    // for (UINT64 i = 0; i < (*instrVec).size(); ++i)
+    // {
+    // 	start = (*instrVec)[i].first;
+    // 	end = (*instrVec)[i].second;
+    // 	while (i+1<(*instrVec).size() && (*instrVec)[i+1].first <= end)
+    // 	{
+    // 		end = max((*instrVec)[i+1].second,end);
+    // 		i++;
+    // 	}
+    // 	total += end-start+1;
 
-    }
+    // }
 
-    *out << "Instruction Memory Map = " << total*G <<endl;
+    *out << "Instruction Memory Map = " << G*instrMap.size() <<endl;
+    *out << "Data Memory Map = " << G*dataMap.size() <<endl;
 
 
 
@@ -389,27 +412,40 @@ VOID Instruction(INS ins, void *v)
     }
 
     UINT64 memOperands = INS_MemoryOperandCount(ins);
-    for (UINT64 memOp = 0; memOp < memOperands; ++memOp)
+    for (UINT32 memOp = 0; memOp < memOperands; ++memOp)
     {
         if (INS_MemoryOperandIsRead(ins, memOp))
         {
-            UINT64 refSize = INS_MemoryOperandSize(ins, memOp);
-            refSize = (refSize+(UINT64)3)/(UINT64)4;
+            UINT64 memSize = INS_MemoryOperandSize(ins, memOp);
+            UINT64 refSize;
+            refSize = (memSize+(UINT64)3)/(UINT64)4;
             INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
             INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)ldInstruction, IARG_UINT64, refSize, IARG_END);
+
+
+    		INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
+   			INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)dataMemory, IARG_MEMORYOP_EA, memOp, IARG_UINT64, memSize, IARG_END);
+
+
         }
         if (INS_MemoryOperandIsWritten(ins, memOp))
         {
-            UINT64 refSize = INS_MemoryOperandSize(ins, memOp);
-            refSize = (refSize+(UINT64)3)/(UINT64)4;
+            UINT64 memSize = INS_MemoryOperandSize(ins, memOp);
+            UINT64 refSize;
+            refSize = (memSize+(UINT64)3)/(UINT64)4;
             INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
             INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)stInstruction, IARG_UINT64, refSize, IARG_END);
+
+
+            INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
+   			INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)dataMemory, IARG_MEMORYOP_EA, memOp, IARG_UINT64, memSize, IARG_END);
         }
     }
 
     INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
     UINT64 insSize = INS_Size(ins);
     INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)insMemory, IARG_INST_PTR, IARG_UINT64, insSize, IARG_END);
+
 }
 
 /*!
@@ -464,28 +500,29 @@ VOID Fini(INT32 code, VOID *v)
 
 
 
-    sort((*instrVec).begin(), (*instrVec).end());
-    UINT64 total=0;
-    UINT64 start,end;
+    // sort((*instrVec).begin(), (*instrVec).end());
+    // UINT64 total=0;
+    // UINT64 start,end;
 
-    for (UINT64 i = 0; i < (*instrVec).size(); ++i)
-    {
-    	start = (*instrVec)[i].first;
-    	end = (*instrVec)[i].second;
-    	while (i+1<(*instrVec).size() && (*instrVec)[i+1].first <= end)
-    	{
-    		end = max((*instrVec)[i+1].second,end);
-    		i++;
-    	}
-    	total += end-start+1;
+    // for (UINT64 i = 0; i < (*instrVec).size(); ++i)
+    // {
+    // 	start = (*instrVec)[i].first;
+    // 	end = (*instrVec)[i].second;
+    // 	while (i+1<(*instrVec).size() && (*instrVec)[i+1].first <= end)
+    // 	{
+    // 		end = max((*instrVec)[i+1].second,end);
+    // 		i++;
+    // 	}
+    // 	total += end-start+1;
 
-    }
+    // }
 
-    *out << "Instruction Memory Map = " << total*G <<endl;
-
-
+    // *out << "Instruction Memory Map = " << total*G <<endl;
 
 
+
+    *out << "Instruction Memory Map = " << G*(instrMap.size()) <<endl;
+    *out << "Data Memory Map = " << G*dataMap.size() <<endl;
     *out <<  "===============================================" << endl;
 }
 
@@ -501,7 +538,7 @@ int main(int argc, char *argv[])
     // Initialize PIN library. Print help message if -h(elp) is specified
     // in the command line or the command line is invalid 
 
-    (instrVec) = new vector <pair<UINT64,UINT64> > [benchLength];
+    // (instrVec) = new vector <pair<UINT64,UINT64> > [benchLength];
     if( PIN_Init(argc,argv) )
     {
         return Usage();
