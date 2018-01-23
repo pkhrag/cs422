@@ -226,6 +226,7 @@ VOID MyExitRoutine() {
     *out << "otherCount = " << otherCount << endl;
     *out << "ldCount = " << ldCount << endl;
     *out << "stCount = " << stCount << endl;
+    *out << "CPI = " << nopCount + DCallCount + ICallCount + retCount + unBraCount + braCount + loOpCount + shiCount + flOpCount + vecCount + coMovCount + MMXSSECount + sysCount + flPtCount + otherCount + ldCount * (UINT64)50 + stCount * (UINT64)50 << endl;
     exit(0);
 }
 
@@ -356,14 +357,14 @@ VOID Instruction(INS ins, void *v)
         if (INS_MemoryOperandIsRead(ins, memOp))
         {
             UINT64 refSize = INS_MemoryOperandSize(ins, memOp);
-            refSize = (refSize+3)/4;
+            refSize = (refSize+(UINT64)3)/(UINT64)4;
             INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
             INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)ldInstruction, IARG_UINT64, refSize, IARG_END);
         }
         if (INS_MemoryOperandIsWritten(ins, memOp))
         {
             UINT64 refSize = INS_MemoryOperandSize(ins, memOp);
-            refSize = (refSize+3)/4;
+            refSize = (refSize+(UINT64)3)/(UINT64)4;
             INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
             INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)stInstruction, IARG_UINT64, refSize, IARG_END);
         }
@@ -415,6 +416,7 @@ VOID Fini(INT32 code, VOID *v)
     *out << "otherCount = " << otherCount << endl;
     *out << "ldCount = " << ldCount << endl;
     *out << "stCount = " << stCount << endl;
+    *out << "CPI = " << nopCount + DCallCount + ICallCount + retCount + unBraCount + braCount + loOpCount + shiCount + flOpCount + vecCount + coMovCount + MMXSSECount + sysCount + flPtCount + otherCount + ldCount * (UINT64)50 + stCount * (UINT64)50 << endl;
     // *out <<  "Number of basic blocks: " << bblCount  << endl;
     // *out <<  "Number of threads: " << threadCount  << endl;
     *out <<  "===============================================" << endl;
