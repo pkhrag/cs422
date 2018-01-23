@@ -1,0 +1,22 @@
+===============================================
+MyPinTool analysis results: 
+Number of instructions: 381981
+allCount = 381981
+nopCount = 411
+DCallCount = 3540
+ICallCount = 161
+retCount = 3697
+unBraCount = 5378
+braCount = 66118
+loOpCount = 48182
+shiCount = 8649
+flOpCount = 0
+vecCount = 0
+coMovCount = 141
+MMXSSECount = 7368
+sysCount = 94
+flPtCount = 0
+otherCount = 237846
+ldCount = 162218
+stCount = 70955
+===============================================
