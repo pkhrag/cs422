@@ -7,6 +7,7 @@
 #include "pin.H"
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 /* ================================================================== */
 // Global variables 
@@ -33,8 +34,12 @@ UINT64 otherCount = 0;
 UINT64 ldCount = 0;
 UINT64 stCount = 0;
 
+UINT64 G = 32;
+
 UINT64 benchLength = 1000000000;
 UINT64 last = 0;
+
+vector <pair<UINT64,UINT64> > * instrVec;
 
 std::ostream * out = &cerr;
 
@@ -177,6 +182,13 @@ VOID stInstruction(UINT64 refSize)
 }
 
 
+VOID insMemory(VOID *p, UINT64 insSize)
+{
+	(*instrVec).push_back(make_pair((reinterpret_cast<UINT64> (p))/G, (reinterpret_cast<UINT64> (p) + insSize)/G) );
+}
+
+
+
 
 
 ADDRINT Terminate(void)
@@ -208,6 +220,7 @@ VOID MyExitRoutine() {
     // printf("otherCount = %u\n", otherCount);
     // printf("ldCount = %u\n", ldCount);
     // printf("stCount = %u\n", stCount);
+
     *out << "allCount = " << allCount << endl;
     *out << "nopCount = " << nopCount << endl;
     *out << "DCallCount = " << DCallCount << endl;
@@ -226,7 +239,31 @@ VOID MyExitRoutine() {
     *out << "otherCount = " << otherCount << endl;
     *out << "ldCount = " << ldCount << endl;
     *out << "stCount = " << stCount << endl;
-    *out << "CPI = " << nopCount + DCallCount + ICallCount + retCount + unBraCount + braCount + loOpCount + shiCount + flOpCount + vecCount + coMovCount + MMXSSECount + sysCount + flPtCount + otherCount + ldCount * (UINT64)50 + stCount * (UINT64)50 << endl;
+    *out << "CPI = " << (nopCount + DCallCount + ICallCount + retCount + unBraCount + braCount + loOpCount + shiCount + flOpCount + vecCount + coMovCount + MMXSSECount + sysCount + flPtCount + otherCount + ldCount * 50.0 + stCount * 50.0)/(UINT64)benchLength << endl;
+    
+    
+
+    sort((*instrVec).begin(), (*instrVec).end());
+    UINT64 total=0;
+    UINT64 start,end;
+
+    for (UINT64 i = 0; i < (*instrVec).size(); ++i)
+    {
+    	start = (*instrVec)[i].first;
+    	end = (*instrVec)[i].second;
+    	while (i+1<(*instrVec).size() && (*instrVec)[i+1].first <= end)
+    	{
+    		end = max((*instrVec)[i+1].second,end);
+    		i++;
+    	}
+    	total += end-start+1;
+
+    }
+
+    *out << "Instruction Memory Map = " << total*G <<endl;
+
+
+
     exit(0);
 }
 
@@ -369,6 +406,10 @@ VOID Instruction(INS ins, void *v)
             INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)stInstruction, IARG_UINT64, refSize, IARG_END);
         }
     }
+
+    INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
+    UINT64 insSize = INS_Size(ins);
+    INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)insMemory, IARG_INST_PTR, IARG_UINT64, insSize, IARG_END);
 }
 
 /*!
@@ -416,9 +457,35 @@ VOID Fini(INT32 code, VOID *v)
     *out << "otherCount = " << otherCount << endl;
     *out << "ldCount = " << ldCount << endl;
     *out << "stCount = " << stCount << endl;
-    *out << "CPI = " << nopCount + DCallCount + ICallCount + retCount + unBraCount + braCount + loOpCount + shiCount + flOpCount + vecCount + coMovCount + MMXSSECount + sysCount + flPtCount + otherCount + ldCount * (UINT64)50 + stCount * (UINT64)50 << endl;
+    *out << "CPI = " << (nopCount + DCallCount + ICallCount + retCount + unBraCount + braCount + loOpCount + shiCount + flOpCount + vecCount + coMovCount + MMXSSECount + sysCount + flPtCount + otherCount + ldCount * 50.0 + stCount * 50.0)/(UINT64)benchLength << endl;
     // *out <<  "Number of basic blocks: " << bblCount  << endl;
     // *out <<  "Number of threads: " << threadCount  << endl;
+
+
+
+
+    sort((*instrVec).begin(), (*instrVec).end());
+    UINT64 total=0;
+    UINT64 start,end;
+
+    for (UINT64 i = 0; i < (*instrVec).size(); ++i)
+    {
+    	start = (*instrVec)[i].first;
+    	end = (*instrVec)[i].second;
+    	while (i+1<(*instrVec).size() && (*instrVec)[i+1].first <= end)
+    	{
+    		end = max((*instrVec)[i+1].second,end);
+    		i++;
+    	}
+    	total += end-start+1;
+
+    }
+
+    *out << "Instruction Memory Map = " << total*G <<endl;
+
+
+
+
     *out <<  "===============================================" << endl;
 }
 
@@ -433,6 +500,8 @@ int main(int argc, char *argv[])
 {
     // Initialize PIN library. Print help message if -h(elp) is specified
     // in the command line or the command line is invalid 
+
+    (instrVec) = new vector <pair<UINT64,UINT64> > [benchLength];
     if( PIN_Init(argc,argv) )
     {
         return Usage();
