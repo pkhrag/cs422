@@ -7,7 +7,6 @@
 #include "pin.H"
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <map>
 
 /* ================================================================== */
@@ -198,6 +197,7 @@ VOID stInstruction(UINT64 refSize)
 
 VOID insMemory(VOID *p, UINT64 insSize, UINT64 insOp, UINT64 insROp, UINT64 insWOp)
 {
+
 	UINT64 start = reinterpret_cast<UINT64> (p)/G;
 	UINT64 end = (reinterpret_cast<UINT64> (p) + insSize)/G;
 
@@ -210,7 +210,6 @@ VOID insMemory(VOID *p, UINT64 insSize, UINT64 insOp, UINT64 insROp, UINT64 insW
 	D2[insOp] = D2[insOp] + 1;
 	D3[insROp] = D3[insROp] + 1;
 	D4[insWOp] = D4[insWOp] + 1;
-
 
 }
 
@@ -290,46 +289,46 @@ VOID MyExitRoutine() {
     *out << "Data Memory Map = " << G*dataMap.size() <<endl;
 
     *out << "Instruction Length Distribution: " << endl;
-    map <UINT64,UINT64> :: iterator it;
-    for(it=D1.begin();it!=D1.end();it++)
+    UINT32 it;
+    for(it=0;it!=50;it++)
     {
-    	*out << it->first << " = " << it->second<<endl; 
+    	*out << it << " = " << D1[it]<<endl; 
     }
 
     *out << "Distribution of number of operands: " << endl;
-    for(it=D2.begin();it!=D2.end();it++)
+    for(it=0;it!=50;it++)
     {
-    	*out << it->first << " = " << it->second<<endl; 
+    	*out << it << " = " << D2[it]<<endl; 
     }
 
     *out << "Distribution of number of register read operands: " << endl;
-    for(it=D3.begin();it!=D3.end();it++)
+    for(it=0;it!=50;it++)
     {
-    	*out << it->first << " = " << it->second<<endl; 
+    	*out << it << " = " << D3[it]<<endl; 
     }
 
     *out << "Distribution of number of register write operands: " << endl;
-    for(it=D4.begin();it!=D4.end();it++)
+    for(it=0;it!=50;it++)
     {
-    	*out << it->first << " = " << it->second<<endl; 
+    	*out << it << " = " << D4[it]<<endl; 
     }
 
     *out << "Distribution of number of memory operands: " << endl;
-    for(it=D5.begin();it!=D5.end();it++)
+    for(it=0;it!=50;it++)
     {
-    	*out << it->first << " = " << it->second<<endl; 
+    	*out << it << " = " << D5[it]<<endl; 
     }
 
     *out << "Distribution of number of read memory operands: " << endl;
-    for(it=D6.begin();it!=D6.end();it++)
+    for(it=0;it!=50;it++)
     {
-    	*out << it->first << " = " << it->second<<endl; 
+    	*out << it << " = " << D6[it]<<endl; 
     }
 
     *out << "Distribution of number of wirte memory operands: " << endl;
-    for(it=D7.begin();it!=D7.end();it++)
+    for(it=0;it!=50;it++)
     {
-    	*out << it->first << " = " << it->second<<endl; 
+    	*out << it << " = " << D7[it]<<endl; 
     }
     exit(0);
 }
@@ -449,7 +448,6 @@ VOID Instruction(INS ins, void *v)
         // INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
         INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)otherInstruction, IARG_END);
     }
-    // cerr << "414" << endl;
 
     UINT64 memOperands = INS_MemoryOperandCount(ins);
     UINT64 memROp = 0;
@@ -467,7 +465,6 @@ VOID Instruction(INS ins, void *v)
 
     		INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
    			INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)dataMemory, IARG_MEMORYOP_EA, memOp, IARG_UINT64, memSize, IARG_END);
-
         }
 
         if (INS_MemoryOperandIsWritten(ins, memOp))
@@ -494,8 +491,6 @@ VOID Instruction(INS ins, void *v)
     UINT64 insROp = INS_MaxNumRRegs(ins);
     UINT64 insWOp = INS_MaxNumWRegs(ins);
     INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)insMemory, IARG_INST_PTR, IARG_UINT64, insSize, IARG_UINT64, insOp, IARG_UINT64, insROp, IARG_UINT64, insWOp, IARG_END);
-
-
 
 }
 
