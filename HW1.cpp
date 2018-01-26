@@ -239,8 +239,10 @@ VOID dataMemory(VOID *p, UINT64 dataSize, ADDRDELTA dis)
 VOID dataDistribution(UINT64 memOp, UINT64 memROp, UINT64 memWOp, UINT64 totalSize, UINT64 yesMem)
 {
 	D5[memOp]++;
-	D6[memROp]++;
-	D7[memWOp]++;
+    if (memOp) {
+        D6[memROp]++;
+        D7[memWOp]++;
+    }
 
 	if(totalSize > maxBytesTouched)
 		maxBytesTouched = totalSize;
