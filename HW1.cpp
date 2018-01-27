@@ -34,6 +34,15 @@ UINT64 otherCount = 0;
 UINT64 ldCount = 0;
 UINT64 stCount = 0;
 
+UINT64 maxBytesTouched = 0;
+UINT64 totalBytesTouched = 0;
+UINT64 countMemInst = 0;
+INT32 maxImmediate = INT32_MIN;
+INT32 minImmediate = INT32_MAX;
+ADDRDELTA maxDis = 0;
+ADDRDELTA minDis = UINT32_MAX;
+
+
 UINT64 G = 32;
 
 UINT64 benchLength = 1000000000;
@@ -42,6 +51,17 @@ UINT64 last = 0;
 map < UINT64,bool >  instrMap;
 
 map < UINT64,bool >  dataMap;
+
+UINT64 D1[50] = {0};
+UINT64 D2[50] = {0};
+UINT64 D3[50] = {0};
+UINT64 D4[50] = {0};
+UINT64 D5[50] = {0};
+UINT64 D6[50] = {0};
+UINT64 D7[50] = {0};
+UINT64 D8[50] = {0};
+UINT64 D9[50] = {0};
+UINT64 D10[50] = {0};
 
 std::ostream * out = &cerr;
 
@@ -184,9 +204,9 @@ VOID stInstruction(UINT64 refSize)
 }
 
 
-VOID insMemory(VOID *p, UINT64 insSize)
+VOID insMemory(VOID *p, UINT64 insSize, UINT64 insOp, UINT64 insROp, UINT64 insWOp)
 {
-	// (*instrVec).push_back(make_pair((reinterpret_cast<UINT64> (p))/G, (reinterpret_cast<UINT64> (p) + insSize)/G) );
+
 	UINT64 start = reinterpret_cast<UINT64> (p)/G;
 	UINT64 end = (reinterpret_cast<UINT64> (p) + insSize)/G;
 
@@ -195,21 +215,49 @@ VOID insMemory(VOID *p, UINT64 insSize)
 		instrMap[i] = true;
 	}
 
+	D1[insSize] = D1[insSize] + 1;
+	D2[insOp] = D2[insOp] + 1;
+	D3[insROp] = D3[insROp] + 1;
+	D4[insWOp] = D4[insWOp] + 1;
+
 }
 
-VOID dataMemory(VOID *p, UINT64 dataSize)
+VOID dataMemory(VOID *p, UINT64 dataSize, ADDRDELTA dis)
 {
-	UINT64 start = reinterpret_cast<UINT64> (p)/G;
-	UINT64 end = (reinterpret_cast<UINT64> (p) + dataSize)/G;
+	UINT64 start = (reinterpret_cast<UINT64> (p))/G;
+	UINT64 end = ((reinterpret_cast<UINT64> (p)) + dataSize)/G;
 
 	for(UINT64 i = start;i<=end;i++)
 	{
 		dataMap[i] = true;
 	}
 
+	maxDis = max(dis, maxDis);
+	minDis = min(dis, minDis);
 }
 
+VOID dataDistribution(UINT64 memOp, UINT64 memROp, UINT64 memWOp, UINT64 totalSize, UINT64 yesMem)
+{
+	D5[memOp]++;
+    if (memOp) {
+        D6[memROp]++;
+        D7[memWOp]++;
+    }
 
+	if(totalSize > maxBytesTouched)
+		maxBytesTouched = totalSize;
+
+	totalBytesTouched += totalSize;
+
+	countMemInst += yesMem;
+
+}
+
+VOID immDistribution(INT32 ret)
+{
+	maxImmediate = max(ret, maxImmediate);
+	minImmediate = min(ret, minImmediate);
+}
 
 
 
@@ -224,76 +272,82 @@ ADDRINT FastForward(void) {
 
 VOID MyExitRoutine() {
 
-    // printf("allCount = %u\n", allCount);
-    // printf("nopCount = %u\n", nopCount);
-    // printf("DCallCount = %u\n", DCallCount);
-    // printf("ICallCount = %u\n", ICallCount);
-    // printf("retCount = %u\n", retCount);
-    // printf("unBraCount = %u\n", unBraCount);
-    // printf("braCount = %u\n", braCount);
-    // printf("loOpCount = %u\n", loOpCount);
-    // printf("shiCount = %u\n", shiCount);
-    // printf("flOpCount = %u\n", flOpCount);
-    // printf("vecCount = %u\n", vecCount);
-    // printf("coMovCount = %u\n", coMovCount);
-    // printf("MMXSSECount = %u\n", MMXSSECount);
-    // printf("sysCount = %u\n", sysCount);
-    // printf("flPtCount = %u\n", flPtCount);
-    // printf("otherCount = %u\n", otherCount);
-    // printf("ldCount = %u\n", ldCount);
-    // printf("stCount = %u\n", stCount);
+    *out <<  "===============================================" << endl;
+    *out <<  "MyPinTool analysis results: " << endl;
+    *out << "Total Instructions: " << allCount << endl;
+    *out << "NOP Instructions: " << nopCount << endl;
+    *out << "Directed Call Instructions: " << DCallCount << endl;
+    *out << "Indirected Call Instructions: " << ICallCount << endl;
+    *out << "Return Instructions: " << retCount << endl;
+    *out << "Unconditional Branch Instructions: " << unBraCount << endl;
+    *out << "Conditional Branch Instructions: " << braCount << endl;
+    *out << "Logical Operation Instructions: " << loOpCount << endl;
+    *out << "Shift Instructions: " << shiCount << endl;
+    *out << "Flag Operation Instructions: " << flOpCount << endl;
+    *out << "Vector Instructions: " << vecCount << endl;
+    *out << "Conditional Moves Instructions: " << coMovCount << endl;
+    *out << "MME, SSE Instructions: " << MMXSSECount << endl;
+    *out << "System Instructions: " << sysCount << endl;
+    *out << "Floating Point Instructions: " << flPtCount << endl;
+    *out << "Other Instructions: " << otherCount << endl;
+    *out << "Load Instructions: " << ldCount << endl;
+    *out << "Store Instructions: " << stCount << endl;
+    *out << "CPI: " << (nopCount + DCallCount + ICallCount + retCount + unBraCount + braCount + loOpCount + shiCount + flOpCount + vecCount + coMovCount + MMXSSECount + sysCount + flPtCount + otherCount + ldCount * 50.0 + stCount * 50.0)/(UINT64)benchLength << endl;
+    *out << "Instruction Memory Map: " << G*instrMap.size() <<endl;
+    *out << "Data Memory Map: " << G*dataMap.size() <<endl;
 
-    *out << "allCount = " << allCount << endl;
-    *out << "nopCount = " << nopCount << endl;
-    *out << "DCallCount = " << DCallCount << endl;
-    *out << "ICallCount = " << ICallCount << endl;
-    *out << "retCount = " << retCount << endl;
-    *out << "unBraCount = " << unBraCount << endl;
-    *out << "braCount = " << braCount << endl;
-    *out << "loOpCount = " << loOpCount << endl;
-    *out << "shiCount = " << shiCount << endl;
-    *out << "flOpCount = " << flOpCount << endl;
-    *out << "vecCount = " << vecCount << endl;
-    *out << "coMovCount = " << coMovCount << endl;
-    *out << "MMXSSECount = " << MMXSSECount << endl;
-    *out << "sysCount = " << sysCount << endl;
-    *out << "flPtCount = " << flPtCount << endl;
-    *out << "otherCount = " << otherCount << endl;
-    *out << "ldCount = " << ldCount << endl;
-    *out << "stCount = " << stCount << endl;
-    *out << "CPI = " << (nopCount + DCallCount + ICallCount + retCount + unBraCount + braCount + loOpCount + shiCount + flOpCount + vecCount + coMovCount + MMXSSECount + sysCount + flPtCount + otherCount + ldCount * 50.0 + stCount * 50.0)/(UINT64)benchLength << endl;
-    
-    
+    *out << "Instruction Length Distribution: " << endl;
+    UINT32 it;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D1[it]<<endl; 
+    }
 
-    // sort((*instrVec).begin(), (*instrVec).end());
-    // UINT64 total=0;
-    // UINT64 start,end;
+    *out << "Distribution of number of operands: " << endl;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D2[it]<<endl; 
+    }
 
-    // for (UINT64 i = 0; i < (*instrVec).size(); ++i)
-    // {
-    // 	start = (*instrVec)[i].first;
-    // 	end = (*instrVec)[i].second;
-    // 	while (i+1<(*instrVec).size() && (*instrVec)[i+1].first <= end)
-    // 	{
-    // 		end = max((*instrVec)[i+1].second,end);
-    // 		i++;
-    // 	}
-    // 	total += end-start+1;
+    *out << "Distribution of number of register read operands: " << endl;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D3[it]<<endl; 
+    }
 
-    // }
+    *out << "Distribution of number of register write operands: " << endl;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D4[it]<<endl; 
+    }
 
-    *out << "Instruction Memory Map = " << G*instrMap.size() <<endl;
-    *out << "Data Memory Map = " << G*dataMap.size() <<endl;
+    *out << "Distribution of number of memory operands: " << endl;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D5[it]<<endl; 
+    }
 
+    *out << "Distribution of number of read memory operands: " << endl;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D6[it]<<endl; 
+    }
 
+    *out << "Distribution of number of wirte memory operands: " << endl;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D7[it]<<endl; 
+    }
+    *out << "Maximum Memory Bytes Touched: " << maxBytesTouched << endl;
+    *out << "Average Bytes Touched: " << (totalBytesTouched * 1.0) / countMemInst << endl;
+    *out << "Maximum Immediate Field: " << maxImmediate << endl;
+    *out << "Minimum Immediate Field: " << minImmediate << endl;
+    *out << "Maximum Displacement Field: " << maxDis << endl;
+    *out << "Minimum Displacement Field: " << minDis << endl;
+    *out <<  "===============================================" << endl;
 
     exit(0);
 }
-
-// VOID MyPredicatedAnalysis() {
-// // # analysis code
-// }
-
 
 /* ===================================================================== */
 // Instrumentation callbacks
@@ -322,7 +376,7 @@ VOID Instruction(INS ins, void *v)
 {
     INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR) Terminate, IARG_END);
     INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)MyExitRoutine, IARG_END);
-    
+
     //Benchmarking
     if ((allCount)/benchLength > last)
     {
@@ -412,39 +466,73 @@ VOID Instruction(INS ins, void *v)
     }
 
     UINT64 memOperands = INS_MemoryOperandCount(ins);
+    UINT64 memROp = 0;
+    UINT64 memWOp = 0;
+    UINT64 yesMem = 0;
+
+    UINT64 totalSize = 0;
     for (UINT32 memOp = 0; memOp < memOperands; ++memOp)
     {
+    	yesMem = 1;
         if (INS_MemoryOperandIsRead(ins, memOp))
         {
             UINT64 memSize = INS_MemoryOperandSize(ins, memOp);
             UINT64 refSize;
-            refSize = (memSize+(UINT64)3)/(UINT64)4;
+            refSize = (memSize+3)/4;
+            memROp++;
+        	ADDRDELTA dis = INS_OperandMemoryDisplacement(ins, memOp);
+
+            totalSize += memSize;
             INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
             INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)ldInstruction, IARG_UINT64, refSize, IARG_END);
 
-
     		INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
-   			INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)dataMemory, IARG_MEMORYOP_EA, memOp, IARG_UINT64, memSize, IARG_END);
-
-
+   			INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)dataMemory, IARG_MEMORYOP_EA, memOp, IARG_UINT64, memSize , IARG_ADDRINT, dis, IARG_END);
         }
+
         if (INS_MemoryOperandIsWritten(ins, memOp))
         {
             UINT64 memSize = INS_MemoryOperandSize(ins, memOp);
             UINT64 refSize;
-            refSize = (memSize+(UINT64)3)/(UINT64)4;
+            memWOp++;
+            refSize = (memSize+3)/4;
+        	ADDRDELTA dis = INS_OperandMemoryDisplacement(ins, memOp);
+
+            totalSize += memSize;
             INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
             INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)stInstruction, IARG_UINT64, refSize, IARG_END);
 
-
             INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
-   			INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)dataMemory, IARG_MEMORYOP_EA, memOp, IARG_UINT64, memSize, IARG_END);
+   			INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)dataMemory, IARG_MEMORYOP_EA, memOp, IARG_UINT64, memSize, IARG_ADDRINT, dis, IARG_END);
         }
     }
 
+
+    INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
+	INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)dataDistribution, IARG_UINT64, memOperands, IARG_UINT64, memROp, IARG_UINT64, memWOp,IARG_UINT64, totalSize, IARG_UINT64, yesMem, IARG_END);
+
+
     INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
     UINT64 insSize = INS_Size(ins);
-    INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)insMemory, IARG_INST_PTR, IARG_UINT64, insSize, IARG_END);
+    UINT64 insOp = INS_OperandCount(ins);
+    UINT64 insROp = INS_MaxNumRRegs(ins);
+    UINT64 insWOp = INS_MaxNumWRegs(ins);
+    INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)insMemory, IARG_INST_PTR, IARG_UINT64, insSize, IARG_UINT64, insOp, IARG_UINT64, insROp, IARG_UINT64, insWOp, IARG_END);
+
+    UINT64 operandsNo = INS_OperandCount(ins);
+    for (UINT32 Op = 0; Op < operandsNo; ++Op)
+    {
+    	
+        BOOL isImmediate = INS_OperandIsImmediate(ins,Op);
+        if(isImmediate)
+        {
+        	INT32 ret = INS_OperandImmediate(ins,Op);
+	    	INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)FastForward, IARG_END);
+    		INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)immDistribution, IARG_ADDRINT, ret, IARG_END);
+        }
+    }
+
+
 
 }
 
@@ -474,55 +562,76 @@ VOID Fini(INT32 code, VOID *v)
 {
     *out <<  "===============================================" << endl;
     *out <<  "MyPinTool analysis results: " << endl;
-    *out <<  "Number of instructions: " << allCount  << endl;
-    *out << "allCount = " << allCount << endl;
-    *out << "nopCount = " << nopCount << endl;
-    *out << "DCallCount = " << DCallCount << endl;
-    *out << "ICallCount = " << ICallCount << endl;
-    *out << "retCount = " << retCount << endl;
-    *out << "unBraCount = " << unBraCount << endl;
-    *out << "braCount = " << braCount << endl;
-    *out << "loOpCount = " << loOpCount << endl;
-    *out << "shiCount = " << shiCount << endl;
-    *out << "flOpCount = " << flOpCount << endl;
-    *out << "vecCount = " << vecCount << endl;
-    *out << "coMovCount = " << coMovCount << endl;
-    *out << "MMXSSECount = " << MMXSSECount << endl;
-    *out << "sysCount = " << sysCount << endl;
-    *out << "flPtCount = " << flPtCount << endl;
-    *out << "otherCount = " << otherCount << endl;
-    *out << "ldCount = " << ldCount << endl;
-    *out << "stCount = " << stCount << endl;
-    *out << "CPI = " << (nopCount + DCallCount + ICallCount + retCount + unBraCount + braCount + loOpCount + shiCount + flOpCount + vecCount + coMovCount + MMXSSECount + sysCount + flPtCount + otherCount + ldCount * 50.0 + stCount * 50.0)/(UINT64)benchLength << endl;
-    // *out <<  "Number of basic blocks: " << bblCount  << endl;
-    // *out <<  "Number of threads: " << threadCount  << endl;
+    *out << "Total Instructions: " << allCount << endl;
+    *out << "NOP Instructions: " << nopCount << endl;
+    *out << "Directed Call Instructions: " << DCallCount << endl;
+    *out << "Indirected Call Instructions: " << ICallCount << endl;
+    *out << "Return Instructions: " << retCount << endl;
+    *out << "Unconditional Branch Instructions: " << unBraCount << endl;
+    *out << "Conditional Branch Instructions: " << braCount << endl;
+    *out << "Logical Operation Instructions: " << loOpCount << endl;
+    *out << "Shift Instructions: " << shiCount << endl;
+    *out << "Flag Operation Instructions: " << flOpCount << endl;
+    *out << "Vector Instructions: " << vecCount << endl;
+    *out << "Conditional Moves Instructions: " << coMovCount << endl;
+    *out << "MME, SSE Instructions: " << MMXSSECount << endl;
+    *out << "System Instructions: " << sysCount << endl;
+    *out << "Floating Point Instructions: " << flPtCount << endl;
+    *out << "Other Instructions: " << otherCount << endl;
+    *out << "Load Instructions: " << ldCount << endl;
+    *out << "Store Instructions: " << stCount << endl;
+    *out << "CPI: " << (nopCount + DCallCount + ICallCount + retCount + unBraCount + braCount + loOpCount + shiCount + flOpCount + vecCount + coMovCount + MMXSSECount + sysCount + flPtCount + otherCount + ldCount * 50.0 + stCount * 50.0)/(UINT64)benchLength << endl;
+    *out << "Instruction Memory Map: " << G*instrMap.size() <<endl;
+    *out << "Data Memory Map: " << G*dataMap.size() <<endl;
 
+    *out << "Instruction Length Distribution: " << endl;
+    UINT32 it;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D1[it]<<endl; 
+    }
 
+    *out << "Distribution of number of operands: " << endl;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D2[it]<<endl; 
+    }
 
+    *out << "Distribution of number of register read operands: " << endl;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D3[it]<<endl; 
+    }
 
-    // sort((*instrVec).begin(), (*instrVec).end());
-    // UINT64 total=0;
-    // UINT64 start,end;
+    *out << "Distribution of number of register write operands: " << endl;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D4[it]<<endl; 
+    }
 
-    // for (UINT64 i = 0; i < (*instrVec).size(); ++i)
-    // {
-    // 	start = (*instrVec)[i].first;
-    // 	end = (*instrVec)[i].second;
-    // 	while (i+1<(*instrVec).size() && (*instrVec)[i+1].first <= end)
-    // 	{
-    // 		end = max((*instrVec)[i+1].second,end);
-    // 		i++;
-    // 	}
-    // 	total += end-start+1;
+    *out << "Distribution of number of memory operands: " << endl;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D5[it]<<endl; 
+    }
 
-    // }
+    *out << "Distribution of number of read memory operands: " << endl;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D6[it]<<endl; 
+    }
 
-    // *out << "Instruction Memory Map = " << total*G <<endl;
-
-
-
-    *out << "Instruction Memory Map = " << G*(instrMap.size()) <<endl;
-    *out << "Data Memory Map = " << G*dataMap.size() <<endl;
+    *out << "Distribution of number of wirte memory operands: " << endl;
+    for(it=0;it!=50;it++)
+    {
+    	*out << it << " = " << D7[it]<<endl; 
+    }
+    *out << "Maximum Memory Bytes Touched: " << maxBytesTouched << endl;
+    *out << "Average Bytes Touched: " << (totalBytesTouched * 1.0) / countMemInst << endl;
+    *out << "Maximum Immediate Field: " << maxImmediate << endl;
+    *out << "Minimum Immediate Field: " << minImmediate << endl;
+    *out << "Maximum Displacement Field: " << maxDis << endl;
+    *out << "Minimum Displacement Field: " << minDis << endl;
     *out <<  "===============================================" << endl;
 }
 
@@ -538,7 +647,6 @@ int main(int argc, char *argv[])
     // Initialize PIN library. Print help message if -h(elp) is specified
     // in the command line or the command line is invalid 
 
-    // (instrVec) = new vector <pair<UINT64,UINT64> > [benchLength];
     if( PIN_Init(argc,argv) )
     {
         return Usage();
