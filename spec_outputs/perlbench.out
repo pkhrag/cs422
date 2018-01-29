@@ -1,35 +1,35 @@
 ===============================================
 MyPinTool analysis results: 
 Total Instructions: 208000000000
-NOP Instructions: 952040
-Directed Call Instructions: 12690457
-Indirected Call Instructions: 2851656
-Return Instructions: 15542113
-Unconditional Branch Instructions: 30565554
-Conditional Branch Instructions: 129960026
-Logical Operation Instructions: 99987916
-Shift Instructions: 4287402
-Flag Operation Instructions: 858789
+NOP Instructions: 966201
+Directed Call Instructions: 12788598
+Indirected Call Instructions: 2827659
+Return Instructions: 15616257
+Unconditional Branch Instructions: 30532433
+Conditional Branch Instructions: 130018958
+Logical Operation Instructions: 100219552
+Shift Instructions: 4265342
+Flag Operation Instructions: 864918
 Vector Instructions: 0
 Conditional Moves Instructions: 0
 MME, SSE Instructions: 0
 System Instructions: 0
-Floating Point Instructions: 922644
-Other Instructions: 701213032
-Load Instructions: 356859955
-Store Instructions: 205582792
-CPI: 29.122
-Instruction Memory Map: 90656
-Data Memory Map: 1002048
+Floating Point Instructions: 942346
+Other Instructions: 700791353
+Load Instructions: 356472727
+Store Instructions: 205979744
+CPI: 29.1225
+Instruction Memory Map: 91264
+Data Memory Map: 1019040
 Instruction Length Distribution: 
 0 = 0
-1 = 117257813
-2 = 256526048
-3 = 274734263
-4 = 52864017
-5 = 78553608
-6 = 186077807
-7 = 33986404
+1 = 117479272
+2 = 256719867
+3 = 274848256
+4 = 52932522
+5 = 78568083
+6 = 185481754
+7 = 33970206
 8 = 28
 9 = 0
 10 = 12
@@ -73,13 +73,13 @@ Instruction Length Distribution:
 48 = 0
 49 = 0
 Distribution of number of operands: 
-0 = 952040
-1 = 1070653
-2 = 520970856
-3 = 355135957
-4 = 103033630
-5 = 15543757
-6 = 3293107
+0 = 966201
+1 = 1072485
+2 = 520653458
+3 = 355058333
+4 = 103365797
+5 = 15617935
+6 = 3265791
 7 = 0
 8 = 0
 9 = 0
@@ -124,13 +124,13 @@ Distribution of number of operands:
 48 = 0
 49 = 0
 Distribution of number of register read operands: 
-0 = 10020071
-1 = 260556963
-2 = 537220052
-3 = 179152022
-4 = 7143503
-5 = 2614282
-6 = 3293107
+0 = 10139370
+1 = 260158504
+2 = 537634326
+3 = 179164713
+4 = 7052675
+5 = 2584621
+6 = 3265791
 7 = 0
 8 = 0
 9 = 0
@@ -175,11 +175,11 @@ Distribution of number of register read operands:
 48 = 0
 49 = 0
 Distribution of number of register write operands: 
-0 = 135676099
-1 = 685288748
-2 = 175738570
-3 = 2399209
-4 = 897374
+0 = 135902158
+1 = 685061417
+2 = 175767021
+3 = 2389502
+4 = 879902
 5 = 0
 6 = 0
 7 = 0
@@ -226,9 +226,9 @@ Distribution of number of register write operands:
 48 = 0
 49 = 0
 Distribution of number of memory operands: 
-0 = 453525737
-1 = 540363151
-2 = 5942741
+0 = 453460672
+1 = 530841382
+2 = 15531563
 3 = 0
 4 = 0
 5 = 0
@@ -277,9 +277,9 @@ Distribution of number of memory operands:
 48 = 0
 49 = 0
 Distribution of number of read memory operands: 
-0 = 190421245
-1 = 354987296
-2 = 897351
+0 = 190856902
+1 = 354636164
+2 = 879879
 3 = 0
 4 = 0
 5 = 0
@@ -328,8 +328,8 @@ Distribution of number of read memory operands:
 48 = 0
 49 = 0
 Distribution of number of wirte memory operands: 
-0 = 341184407
-1 = 205121485
+0 = 340864359
+1 = 205508586
 2 = 0
 3 = 0
 4 = 0
@@ -379,7 +379,7 @@ Distribution of number of wirte memory operands:
 48 = 0
 49 = 0
 Maximum Memory Bytes Touched: 8
-Average Bytes Touched: 3.80817
+Average Bytes Touched: 3.80897
 Maximum Immediate Field: 2147483647
 Minimum Immediate Field: -2147483648
 Maximum Displacement Field: 135918104

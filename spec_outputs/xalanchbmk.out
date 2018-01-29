@@ -1,36 +1,36 @@
 ===============================================
 MyPinTool analysis results: 
 Total Instructions: 1332000000000
-NOP Instructions: 22004036
-Directed Call Instructions: 13270502
-Indirected Call Instructions: 8947481
-Return Instructions: 22216377
-Unconditional Branch Instructions: 8619100
-Conditional Branch Instructions: 177691765
-Logical Operation Instructions: 37949050
-Shift Instructions: 5621523
+NOP Instructions: 22004030
+Directed Call Instructions: 13270504
+Indirected Call Instructions: 8947483
+Return Instructions: 22216380
+Unconditional Branch Instructions: 8619103
+Conditional Branch Instructions: 177691744
+Logical Operation Instructions: 37949055
+Shift Instructions: 5621524
 Flag Operation Instructions: 1675118
 Vector Instructions: 0
 Conditional Moves Instructions: 0
 MME, SSE Instructions: 0
 System Instructions: 0
 Floating Point Instructions: 7312904
-Other Instructions: 694215659
-Load Instructions: 367809095
-Store Instructions: 169267448
+Other Instructions: 694215670
+Load Instructions: 367809103
+Store Instructions: 169267473
 CPI: 27.8534
 Instruction Memory Map: 74080
-Data Memory Map: 27004128
+Data Memory Map: 27004160
 Instruction Length Distribution: 
 0 = 0
-1 = 145417757
-2 = 320263724
-3 = 446452175
-4 = 31889600
-5 = 24145359
-6 = 23732587
-7 = 7709390
-8 = 262554
+1 = 145417765
+2 = 320263712
+3 = 446452165
+4 = 31889603
+5 = 24145364
+6 = 23732591
+7 = 7709391
+8 = 262555
 9 = 60557
 10 = 66297
 11 = 0
@@ -73,12 +73,12 @@ Instruction Length Distribution:
 48 = 0
 49 = 0
 Distribution of number of operands: 
-0 = 22004036
+0 = 22004030
 1 = 748201
-2 = 423137798
-3 = 412388536
-4 = 102001433
-5 = 24177447
+2 = 423137817
+3 = 412388500
+4 = 102001452
+5 = 24177451
 6 = 15542549
 7 = 0
 8 = 0
@@ -124,12 +124,12 @@ Distribution of number of operands:
 48 = 0
 49 = 0
 Distribution of number of register read operands: 
-0 = 29469966
-1 = 236655496
-2 = 457873934
-3 = 250424184
-4 = 1205391
-5 = 8828480
+0 = 29469962
+1 = 236655485
+2 = 457873944
+3 = 250424186
+4 = 1205392
+5 = 8828482
 6 = 15542549
 7 = 0
 8 = 0
@@ -175,9 +175,9 @@ Distribution of number of register read operands:
 48 = 0
 49 = 0
 Distribution of number of register write operands: 
-0 = 113551816
-1 = 685189757
-2 = 185714371
+0 = 113551821
+1 = 685189745
+2 = 185714378
 3 = 15544056
 4 = 0
 5 = 0
@@ -226,9 +226,9 @@ Distribution of number of register write operands:
 48 = 0
 49 = 0
 Distribution of number of memory operands: 
-0 = 493002396
-1 = 482643216
-2 = 23877903
+0 = 493002365
+1 = 479448355
+2 = 27072795
 3 = 0
 4 = 0
 5 = 0
@@ -277,8 +277,8 @@ Distribution of number of memory operands:
 48 = 0
 49 = 0
 Distribution of number of read memory operands: 
-0 = 141052696
-1 = 365468423
+0 = 141052719
+1 = 365468431
 2 = 0
 3 = 0
 4 = 0
@@ -328,8 +328,8 @@ Distribution of number of read memory operands:
 48 = 0
 49 = 0
 Distribution of number of wirte memory operands: 
-0 = 338395630
-1 = 168125489
+0 = 338395636
+1 = 168125514
 2 = 0
 3 = 0
 4 = 0

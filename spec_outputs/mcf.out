@@ -20,7 +20,7 @@ Load Instructions: 415212613
 Store Instructions: 110040128
 CPI: 27.2626
 Instruction Memory Map: 2080
-Data Memory Map: 373532384
+Data Memory Map: 373532416
 Instruction Length Distribution: 
 0 = 0
 1 = 80626418
@@ -227,8 +227,8 @@ Distribution of number of register write operands:
 49 = 0
 Distribution of number of memory operands: 
 0 = 487182363
-1 = 512817637
-2 = 0
+1 = 500382533
+2 = 12435104
 3 = 0
 4 = 0
 5 = 0

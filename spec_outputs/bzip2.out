@@ -227,8 +227,8 @@ Distribution of number of register write operands:
 49 = 0
 Distribution of number of memory operands: 
 0 = 399852629
-1 = 597593148
-2 = 2550138
+1 = 516406388
+2 = 83736898
 3 = 0
 4 = 0
 5 = 0
