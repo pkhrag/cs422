@@ -21,6 +21,7 @@ class PREDICTOR
     typedef uint8_t counter_t;
 
     static const int BHR_LENGTH = 15;
+    // never changes. Used to add 1 in the bhr by ORing.
     static const history_t BHR_MSB = (history_t(1) << (BHR_LENGTH - 1));
     static const std::size_t PHT_SIZE = (std::size_t(1) << BHR_LENGTH);
     static const std::size_t PHT_INDEX_MASK = (PHT_SIZE - 1);
@@ -32,6 +33,7 @@ class PREDICTOR
     void update_bhr(bool taken) { bhr >>= 1; if (taken) bhr |= BHR_MSB; }
     static std::size_t pht_index(address_t pc, history_t bhr) 
         { return (static_cast<std::size_t>(pc ^ bhr) & PHT_INDEX_MASK); }
+    //Assuming 2 bit counter
     static bool counter_msb(/* 2-bit counter */ counter_t cnt) { return (cnt >= 2); }
     static counter_t counter_inc(/* 2-bit counter */ counter_t cnt)
         { if (cnt != 3) ++cnt; return cnt; }
