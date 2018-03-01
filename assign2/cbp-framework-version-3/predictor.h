@@ -18,13 +18,13 @@ class PREDICTOR
 
   private:
     typedef uint32_t history_t;
-    typedef uint8_t counter_t;
+    typedef uint32_t counter_t;
 
     static const int BHR_LENGTH = 15;
     static const history_t BHR_MSB = (history_t(1) << (BHR_LENGTH - 1));
     static const std::size_t PHT_SIZE = (std::size_t(1) << BHR_LENGTH);
     static const std::size_t PHT_INDEX_MASK = (PHT_SIZE - 1);
-    static const counter_t PHT_INIT = /* weakly taken */ 2;
+    static const counter_t PHT_INIT = /* weakly taken */ 4;
 
     history_t bhr;                // 15 bits
     std::vector<counter_t> pht;   // 64K bits
@@ -32,9 +32,9 @@ class PREDICTOR
     void update_bhr(bool taken) { bhr >>= 1; if (taken) bhr |= BHR_MSB; }
     static std::size_t pht_index(address_t pc, history_t bhr) 
         { return (static_cast<std::size_t>(pc ^ bhr) & PHT_INDEX_MASK); }
-    static bool counter_msb(/* 2-bit counter */ counter_t cnt) { return (cnt >= 2); }
+    static bool counter_msb(/* 2-bit counter */ counter_t cnt) { return (cnt >= 4); }
     static counter_t counter_inc(/* 2-bit counter */ counter_t cnt)
-        { if (cnt != 3) ++cnt; return cnt; }
+        { if (cnt != 7) ++cnt; return cnt; }
     static counter_t counter_dec(/* 2-bit counter */ counter_t cnt)
         { if (cnt != 0) --cnt; return cnt; }
 
