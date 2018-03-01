@@ -1,0 +1,3 @@
+                INT1        INT2        INT3        MM1         MM2         SERV1       SERV2       SERV3       SERV4       SERV5
+
+Vanilla Gshare  7.907       8.708       13.357      9.119       10.854     5.691        5.897       7.235       7.009       6.767
