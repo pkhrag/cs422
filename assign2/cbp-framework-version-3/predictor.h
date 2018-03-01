@@ -20,19 +20,37 @@ class PREDICTOR
     typedef uint32_t history_t;
     typedef uint8_t counter_t;
 
-    static const int BHR_LENGTH = 15;
+    static const int BHR_LENGTH = 14;
     // never changes. Used to add 1 in the bhr by ORing.
-    static const history_t BHR_MSB = (history_t(1) << (BHR_LENGTH - 1));
-    static const std::size_t PHT_SIZE = (std::size_t(1) << BHR_LENGTH);
-    static const std::size_t PHT_INDEX_MASK = (PHT_SIZE - 1);
+    static const history_t BHR1_MSB = (history_t(1) << (BHR_LENGTH - 1));
+    static const history_t BHR2_MSB = (history_t(1) << (BHR_LENGTH - 2));
+    static const history_t BHR3_MSB = (history_t(1) << (BHR_LENGTH - 2));
+    static const std::size_t PHT1_SIZE = (std::size_t(1) << BHR_LENGTH);
+    static const std::size_t PHT2_SIZE = (std::size_t(1) << (BHR_LENGTH - 1));
+    static const std::size_t PHT3_SIZE = (std::size_t(1) << (BHR_LENGTH - 1));
+    static const std::size_t PHT1_INDEX_MASK = (PHT1_SIZE - 1);
+    static const std::size_t PHT2_INDEX_MASK = (PHT2_SIZE - 1);
+    static const std::size_t PHT3_INDEX_MASK = (PHT3_SIZE - 1);
     static const counter_t PHT_INIT = /* weakly taken */ 2;
 
-    history_t bhr;                // 15 bits
-    std::vector<counter_t> pht;   // 64K bits
+    history_t bhr1;                // 15 bits
+    history_t bhr2;                // 15 bits
+    history_t bhr3;                // 15 bits
+    std::vector<counter_t> pht1;   // 64K bits
+    std::vector<counter_t> pht2;   // 64K bits
+    std::vector<counter_t> pht3;   // 64K bits
 
-    void update_bhr(bool taken) { bhr >>= 1; if (taken) bhr |= BHR_MSB; }
-    static std::size_t pht_index(address_t pc, history_t bhr) 
-        { return (static_cast<std::size_t>(pc ^ bhr) & PHT_INDEX_MASK); }
+    void update_bhr(bool taken) { 
+        bhr1 >>= 1; if (taken) bhr1 |= BHR1_MSB;
+        bhr2 >>= 1; if (taken) bhr2 |= BHR2_MSB;
+        bhr3 >>= 1; if (taken) bhr3 |= BHR3_MSB;
+    }
+    static std::size_t pht1_index(address_t pc, history_t bhr) 
+        { return (static_cast<std::size_t>(pc ^ bhr) & PHT1_INDEX_MASK); }
+    static std::size_t pht2_index(address_t pc, history_t bhr) 
+        { return (static_cast<std::size_t> (pc & PHT2_INDEX_MASK)); }
+    static std::size_t pht3_index(address_t pc, history_t bhr) 
+        { return (static_cast<std::size_t> (bhr & PHT3_INDEX_MASK)); }
     //Assuming 2 bit counter
     static bool counter_msb(/* 2-bit counter */ counter_t cnt) { return (cnt >= 2); }
     static counter_t counter_inc(/* 2-bit counter */ counter_t cnt)
@@ -41,7 +59,7 @@ class PREDICTOR
         { if (cnt != 0) --cnt; return cnt; }
 
   public:
-    PREDICTOR(void) : bhr(0), pht(PHT_SIZE, counter_t(PHT_INIT)) { }
+    PREDICTOR(void) : bhr1(0), bhr2(0), bhr3(0), pht1(PHT1_SIZE, counter_t(PHT_INIT)), pht2(PHT2_SIZE, counter_t(PHT_INIT)), pht3(PHT3_SIZE, counter_t(PHT_INIT)) { }
     // uses compiler generated copy constructor
     // uses compiler generated destructor
     // uses compiler generated assignment operator
@@ -56,9 +74,14 @@ class PREDICTOR
             bool prediction = false;
             if (/* conditional branch */ br->is_conditional) {
                 address_t pc = br->instruction_addr;
-                std::size_t index = pht_index(pc, bhr);
-                counter_t cnt = pht[index];
-                prediction = counter_msb(cnt);
+                std::size_t index1 = pht1_index(pc, bhr1);
+                std::size_t index2 = pht2_index(pc, bhr2);
+                std::size_t index3 = pht3_index(pc, bhr3);
+                counter_t cnt1 = pht1[index1];
+                counter_t cnt2 = pht2[index2];
+                counter_t cnt3 = pht3[index3];
+                counter_t cntf = counter_msb(cnt1) + counter_msb(cnt2) + counter_msb(cnt3);
+                prediction = counter_msb(cntf);
             }
             return prediction;   // true for taken, false for not taken
         }
@@ -70,13 +93,27 @@ class PREDICTOR
         {
             if (/* conditional branch */ br->is_conditional) {
                 address_t pc = br->instruction_addr;
-                std::size_t index = pht_index(pc, bhr);
-                counter_t cnt = pht[index];
+                std::size_t index1 = pht1_index(pc, bhr1);
+                std::size_t index2 = pht2_index(pc, bhr2);
+                std::size_t index3 = pht3_index(pc, bhr3);
+                counter_t cnt1 = pht1[index1];
+                counter_t cnt2 = pht2[index2];
+                counter_t cnt3 = pht3[index3];
                 if (taken)
-                    cnt = counter_inc(cnt);
+                {
+                    cnt1 = counter_inc(cnt1);
+                    cnt2 = counter_inc(cnt2);
+                    cnt3 = counter_inc(cnt3);
+                }
                 else
-                    cnt = counter_dec(cnt);
-                pht[index] = cnt;
+                {
+                    cnt1 = counter_dec(cnt1);
+                    cnt2 = counter_dec(cnt2);
+                    cnt3 = counter_dec(cnt3);
+                }
+                pht1[index1] = cnt1;
+                pht2[index2] = cnt2;
+                pht3[index3] = cnt3;
                 update_bhr(taken);
             }
         }
