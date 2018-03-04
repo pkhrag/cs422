@@ -4,7 +4,7 @@
 
 #ifndef PREDICTOR_H_SEEN
 #define PREDICTOR_H_SEEN
-
+#include <iostream>
 #include <stdlib.h>
 #include <math.h>
 #include <cstddef>
@@ -22,16 +22,27 @@ class PREDICTOR
     typedef uint64_t history_t;
     typedef uint8_t counter_t;
 
-    static const int BHR_LENGTH = 34;
-    static const int THRESHOLD = 79;
+    // static const int BHR_LENGTH = 34;
+    // static const int THRESHOLD = 79;
+    // static const int WEIGHT_BITS = 7;
+    // static const int MAX_ABS_WEIGHT = 64;
+    // static const int ENTRY_SIZE = WEIGHT_BITS*BHR_LENGTH;
+    // static const std::size_t PHT_SIZE = (std::size_t((64*1024)/ENTRY_SIZE));
+
+
+    static const int BHR_LENGTH = 15;
+    static const int THRESHOLD = 25;
     static const int WEIGHT_BITS = 7;
+    static const int MAX_ABS_WEIGHT = 64;
     static const int ENTRY_SIZE = WEIGHT_BITS*BHR_LENGTH;
+    static const std::size_t PHT_SIZE = (std::size_t((32*1024)/ENTRY_SIZE));
+
+
+    // static const std::size_t PHT_SIZE = (std::size_t(1000));
     static const history_t BHR_MSB = (history_t(1) << (BHR_LENGTH - 1));
     // static const std::size_t PHT_SIZE = (std::size_t(1) << BHR_LENGTH);
-    static const std::size_t PHT_SIZE = (std::size_t(64*1024/ENTRY_SIZE));
     static const std::size_t PHT_INDEX_MASK = (PHT_SIZE - 1);
     // static const counter_t PHT_INIT = /* weakly taken */ 2;
-    static const int MAX_ABS_WEIGHT = 64;
     int DOT_PRODUCT;
     
     typedef struct pht_entry
@@ -47,11 +58,12 @@ class PREDICTOR
     void update_bhr(bool taken) { bhr >>= 1; if (taken) bhr |= BHR_MSB; }
 
     static std::size_t pht_index(address_t pc, history_t bhr) 
-        { return (static_cast<std::size_t>(pc ^ bhr) & PHT_INDEX_MASK); }
+        { return (static_cast<std::size_t>(pc) & PHT_INDEX_MASK); }
 
   public:
     // PREDICTOR(void) : bhr(0), pht(PHT_SIZE, counter_t(PHT_INIT)) { }
     PREDICTOR(void) : bhr(0){
+        // std::cout<<"PHT_SIZE "<<PHT_SIZE<<std::endl;
         pht.reserve(PHT_SIZE);
         for (uint i = 0; i < PHT_SIZE; ++i)
         {
@@ -75,9 +87,11 @@ class PREDICTOR
                 address_t pc = br->instruction_addr;
                 std::size_t index = pht_index(pc, bhr);
                 int output = pht[index].weight[0];
+                int x=1;
                 for (int i = 0; i < BHR_LENGTH; ++i)
                 {
                     int t = bhr>>(BHR_LENGTH-i-1);
+                    t = (t&x);
                     if(t==1)
                         output += pht[index].weight[i+1];
                     else 
@@ -102,9 +116,11 @@ class PREDICTOR
                 address_t pc = br->instruction_addr;
                 std::size_t index = pht_index(pc, bhr);
                 int output = pht[index].weight[0];
+                int x = 1;
                 for (int i = 0; i < BHR_LENGTH; ++i)
                 {
                     int t = bhr>>(BHR_LENGTH-i-1);
+                    t =(t&x);
                     if(t==1)
                         output += pht[index].weight[i+1];
                     else 
@@ -120,19 +136,29 @@ class PREDICTOR
                     std::size_t index = pht_index(pc, bhr);
                     for (int i = 0; i < BHR_LENGTH; ++i)
                     {
-                        if(abs(pht[index].weight[i+1])==MAX_ABS_WEIGHT)continue;
+                        // if(abs(pht[index].weight[i+1])==MAX_ABS_WEIGHT)continue;
                         if(taken){
                             int t = bhr>>(BHR_LENGTH-i-1);
-                            if(t==1)
+                            t = (t&x);
+                            if(t==1){
+                                if(pht[index].weight[i+1]==MAX_ABS_WEIGHT)continue;
                                 pht[index].weight[i+1] += 1;
-                            else
+                            }
+                            else{
+                                if(pht[index].weight[i+1]==-MAX_ABS_WEIGHT)continue;
                                 pht[index].weight[i+1] -= 1;
+                            }
                         }else{
                             int t = bhr>>(BHR_LENGTH-i-1);
-                            if(t==1)
+                            t = (t&x);
+                            if(t==1){
+                                if(pht[index].weight[i+1]==-MAX_ABS_WEIGHT)continue;
                                 pht[index].weight[i+1] -= 1;
-                            else
+                            }
+                            else{
+                                if(pht[index].weight[i+1]==MAX_ABS_WEIGHT)continue;
                                 pht[index].weight[i+1] += 1;  
+                            }
                         }
                     }
                 }
