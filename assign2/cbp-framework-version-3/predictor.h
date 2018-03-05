@@ -146,7 +146,7 @@ class PREDICTOR
               float prediction_value = get_prediction_value(br, os);
               address_t pc = br->instruction_addr;
               prediction = (prediction_value >= 0 ? true : false);
-              training_data_input[INPUT_LENGTH-2] = double(prediction*5);
+              training_data_input[INPUT_LENGTH-2] = (double(prediction) - 0.5)*10;
               fill_input(pc);
               predict_nn = (*genann_run(ann, training_data_input) >= 0.5)? 1:0;
               // std::cout<< *genann_run(ann, training_data_input) << std::endl;
@@ -190,7 +190,7 @@ class PREDICTOR
                 } else if (abs(prediction_value) <= theta) {
                   tc_dec();
                 }
-                training_data_input[INPUT_LENGTH-2] = double(prediction*5);
+                training_data_input[INPUT_LENGTH-2] = (double(prediction) - 0.5)*10;
                 for (int i = 0; i < TIMES; i++) {
                     double output[1];
                     output[0] = taken;
@@ -206,4 +206,3 @@ class PREDICTOR
 };
 
 #endif // PREDICTOR_H_SEEN
-
