@@ -23,6 +23,7 @@ main(int argc, char* argv[])
 
     cbp_trace_reader_c cbptr = cbp_trace_reader_c(argv[1]);
     branch_record_c br;
+    predictor.print();
 
     // read the trace, one branch at a time, placing the branch info in br
     while (cbptr.get_branch_record(&br)) {
@@ -41,6 +42,7 @@ main(int argc, char* argv[])
         // correct branch result
         predictor.update_predictor(&br, cbptr.osptr, actual_taken);
     }
+    predictor.print();
 }
 
 
