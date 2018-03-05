@@ -23,14 +23,16 @@ class PREDICTOR
     typedef uint8_t counter_t;
 
     static const int BHR_LENGTH = 15;
+    static const int BHR_LENGTH_NN = 24;
     // never changes. Used to add 1 in the bhr by O Ring.
     static const history_t BHR_MSB = (history_t(1) << (BHR_LENGTH - 1));
+    static const history_t BHR_MSB_NN = (history_t(1) << (BHR_LENGTH_NN - 1));
     static const std::size_t PHT_SIZE = (std::size_t(1) << BHR_LENGTH);
     static const std::size_t PHT_INDEX_MASK = (PHT_SIZE - 1);
-    static const std::size_t ADDRESS_SIZE = 20;
+    static const std::size_t ADDRESS_SIZE = 16;
     static const std::size_t ADDRESS_MASK = (ADDRESS_SIZE != 32) ? ((std::size_t(1) << ADDRESS_SIZE) - 1):(-1);
     static const counter_t PHT_INIT = /* weakly taken */ 2;
-    static const std::size_t INPUT_LENGTH = BHR_LENGTH + ADDRESS_SIZE + 1 + 1;
+    static const std::size_t INPUT_LENGTH = BHR_LENGTH_NN + ADDRESS_SIZE + 1 + 1;
     double training_data_input[INPUT_LENGTH];
     genann *ann;
     bool prediction = false;
@@ -39,9 +41,13 @@ class PREDICTOR
     uint32_t count = 0;
 
     history_t bhr;                // 15 bits
+    history_t bhr_nn;                // 15 bits
     std::vector<counter_t> pht;   // 64K bits
 
-    void update_bhr(bool taken) { bhr >>= 1; if (taken) bhr |= BHR_MSB; }
+    void update_bhr(bool taken) { 
+        bhr >>= 1; if (taken) bhr |= BHR_MSB;
+        bhr_nn >>= 1; if(taken) bhr_nn |= BHR_MSB_NN;
+    }
     static std::size_t pht_index(address_t pc, history_t bhr) 
         { return (static_cast<std::size_t>(pc ^ bhr) & PHT_INDEX_MASK); }
     //Assuming 2 bit counter
@@ -51,21 +57,21 @@ class PREDICTOR
     static counter_t counter_dec(/* 2-bit counter */ counter_t cnt)
         { if (cnt != 0) --cnt; return cnt; }
     void fill_input(address_t pc){
-        uint32_t temp = bhr;
-        for (int i = 0; i < BHR_LENGTH; i++) {
+        uint32_t temp = bhr_nn;
+        for (int i = 0; i < BHR_LENGTH_NN; i++) {
             training_data_input[i] = double(temp & 1);
             temp >>= 1;
         }
         address_t masked_address = pc & ADDRESS_MASK;
         for (int i = 0; i < ADDRESS_SIZE; i++) {
-            training_data_input[i+BHR_LENGTH] = double(masked_address & 1);
+            training_data_input[i+BHR_LENGTH_NN] = double(masked_address & 1);
             masked_address >>= 1;
         }
     }
 
   public:
-    PREDICTOR(void) : bhr(0), pht(PHT_SIZE, counter_t(PHT_INIT)) {
-        ann = genann_init(INPUT_LENGTH, 1, 5, 1);
+    PREDICTOR(void) : bhr(0), bhr_nn(0), pht(PHT_SIZE, counter_t(PHT_INIT)) {
+        ann = genann_init(INPUT_LENGTH, 1, 7, 1);
     }
     // uses compiler generated copy constructor
     // uses compiler generated destructor
@@ -85,7 +91,7 @@ class PREDICTOR
                 std::size_t index = pht_index(pc, bhr);
                 counter_t cnt = pht[index];
                 predicGshare = counter_msb(cnt);
-                training_data_input[INPUT_LENGTH-2] = double(predicGshare*15);
+                training_data_input[INPUT_LENGTH-2] = double(predicGshare*20);
                 training_data_input[INPUT_LENGTH-1] = double(1);
                 fill_input(pc);
                 //std::cout << *genann_run(ann, training_data_input) << std::endl;
