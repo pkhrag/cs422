@@ -116,7 +116,6 @@ class PREDICTOR
                 else
                     cnt = counter_dec(cnt);
                 pht[index] = cnt;
-                update_bhr(taken);
                 fill_input(pc);
                 training_data_input[INPUT_LENGTH-2] = double(predicGshare*20);
                 training_data_input[INPUT_LENGTH-1] = double(1);
@@ -125,6 +124,7 @@ class PREDICTOR
                     output[0] = taken;
                     genann_train(ann, training_data_input, output, 0.00005);
                 }
+                update_bhr(taken);
                 /*for (int i = 0; i < INPUT_LENGTH; i++) {
                     std::cout<<training_data_input[i] << ' ';
                 }
